@@ -1,6 +1,7 @@
 package com.example.jetpackcomposeapplication
 
 import android.content.res.Configuration
+import android.webkit.WebView
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
@@ -13,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -21,6 +23,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.window.Dialog
 import com.example.jetpackcomposeapplication.ui.theme.JetpackComposeApplicationTheme
 
 @Composable
@@ -100,27 +103,32 @@ fun ComposeListItem(msg: ListItem) {
 fun ComposeMainScreen() {
     JetpackComposeApplicationTheme {
         var scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
-        var clickedFloatingButton by remember { mutableStateOf(false) }
-        var clickedViewButton by remember { mutableStateOf(false) }
+        var showDialogState by remember { mutableStateOf(false) }
+        var toggleState by remember { mutableStateOf(false) }
 
+        // https://developer.android.com/reference/kotlin/androidx/compose/material/package-summary
         Scaffold(
             scaffoldState = scaffoldState,
-            backgroundColor = Color(0), // transparent background
+            backgroundColor = Color(0), // transparent background to see through UnityPlayer
+            floatingActionButtonPosition = FabPosition.End,
+            floatingActionButton = { FloatingActionButton(onClick = {
+                showDialogState = true
+            }){ Text("OK") } },
             topBar =  {
                 TopAppBar(title = { Text("Title") }, backgroundColor = MaterialTheme.colors.background)
             },
-            floatingActionButtonPosition = FabPosition.End,
-            floatingActionButton = { FloatingActionButton(onClick = {
-                clickedFloatingButton = true
-            }){ Text("OK") } },
-            drawerContent =
-            {
-                Column()
-                {
+            bottomBar = {
+                BottomAppBar(
+                    backgroundColor = MaterialTheme.colors.surface
+                ) { Text("BottomAppBar") }
+            },
+            drawerShape = MaterialTheme.shapes.small,
+            drawerContent = {
+                Column {
                     Text(text = "drawerContent")
                     // Animation
                     // https://developer.android.com/jetpack/compose/animation
-                    Crossfade(targetState = clickedViewButton) { state ->
+                    Crossfade(targetState = toggleState) { state ->
                         when (state) {
                             true -> {
                                 Button(onClick = { }) { Text("MyComposeButton") }
@@ -130,25 +138,21 @@ fun ComposeMainScreen() {
                             }
                         }
                     }
-
                     // interop AndroidView
                     // https://developer.android.com/jetpack/compose/interop/interop-apis
                     AndroidView(factory = { ctx ->
-                        android.widget.Button(ctx).also {
-                            it.layoutParams = android.widget.LinearLayout.LayoutParams(
-                                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                        android.widget.Button(ctx).apply {
+                            layoutParams = android.widget.LinearLayout.LayoutParams(android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT
                             )
-                            it.text = "HOGEHOGE"
-                            it.setOnClickListener({ clickedViewButton = !clickedViewButton });
+                            text = "HOGEHOGE"
+                            setOnClickListener({ toggleState = !toggleState });
                         }
                     }, modifier = Modifier.padding(top = 20.dp))
                 }
             },
-            drawerShape = MaterialTheme.shapes.small,
             content = {
-                Column()
-                {
+                Column {
                     ComposeList(
                         messages = listOf(
                             ListItem("Name", "aaaaaa"),
@@ -156,17 +160,45 @@ fun ComposeMainScreen() {
                         )
                     )
                 }
-            },
-            bottomBar = { BottomAppBar(backgroundColor = MaterialTheme.colors.surface) { Text("BottomAppBar") } }
+            }
         )
 
         // wake dialog
-        if(clickedFloatingButton)
+        if(showDialogState)
         {
-            AlertDialog(
-                title = {Text("Title")}, text = {Text("Text")},
-                onDismissRequest = { clickedFloatingButton = false},
-                confirmButton = { Button(onClick = {clickedFloatingButton = false}){Text("Confirm")} })
+            Dialog(
+                onDismissRequest = { showDialogState = false },
+            ) {
+                Surface(
+                    shape = MaterialTheme.shapes.medium,
+                    color = MaterialTheme.colors.surface,
+                    contentColor = MaterialTheme.colors.primary
+                ) {
+                    Box(Modifier.padding(24.dp)){
+                        Column {
+                            // WebView
+                            // https://kaleidot.net/jetpack-compose-%E3%81%AE-androidview-%E3%81%A7-webview-%E3%82%92%E5%88%A9%E7%94%A8%E3%81%99%E3%82%8B-b3cdb3efa69e
+                            AndroidView(
+                                factory = { ctx ->
+                                    WebView(ctx).apply {
+                                        layoutParams =
+                                            android.widget.LinearLayout.LayoutParams(800, 600)
+                                    }
+                                },
+                                update = {
+                                    it.webViewClient = android.webkit.WebViewClient()
+                                    it.loadUrl("https://www.google.com")
+                                })
+                            Button(
+                                modifier = Modifier.align(Alignment.CenterHorizontally),
+                                onClick = { showDialogState = false }
+                            ) {
+                                Text("Confirm")
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 }
