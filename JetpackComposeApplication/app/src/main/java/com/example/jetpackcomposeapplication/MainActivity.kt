@@ -24,7 +24,8 @@ class MainActivity : ComponentActivity() {
             AndroidView(factory = { ctx ->
                 unityPlayer?.view!!
             })
-            MainScreen()
+            val appContainer = AppContainerImpl(this)
+            MainApp(appContainer)
         }
     }
 

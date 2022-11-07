@@ -27,7 +27,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.jetpackcomposeapplication.ui.theme.JetpackComposeApplicationTheme
 
 @Composable
-fun MainScreen () {
+fun MainScreen (appContainer: AppContainer) {
     ComposeMainScreen()
 }
 
@@ -208,6 +208,6 @@ fun ComposeMainScreen() {
     uiMode = Configuration.UI_MODE_NIGHT_NO
 )
 @Composable
-fun DefaultPreview() {
+fun MainScreenPreview() {
     ComposeMainScreen()
 }
