@@ -37,4 +37,8 @@ class MainActivity : ComponentActivity() {
         super.onResume()
         unityPlayer?.resume()
     }
+    override fun onPause() {
+        super.onPause()
+        unityPlayer?.pause()
+    }
 }
